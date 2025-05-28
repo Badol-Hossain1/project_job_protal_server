@@ -6,9 +6,29 @@ const cookieParser = require('cookie-parser')
 const app = express();
 require('dotenv').config()
 const port = process.env.PORT || 5000;
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173', 
+  credentials: true,
+   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',               
+}));
 app.use(express.json());
 app.use(cookieParser())
+
+
+const verifyToken = (req,res,next) => {
+  const token = req.cookies?.token;
+  console.log("🚀 ~ verifyToken ~ token:", token)
+  if(!token){
+    return res.send({massage:'unAuthorized access'})
+  }
+  jwt.verify(token,process.env.SECRET,(err,decoded)=> {
+    if(err){
+      return res.status(401).send({massage: 'bad request '})
+    }
+    req.user = decoded
+    next()
+  })
+}
 
 
 
@@ -105,9 +125,14 @@ async function run() {
     })
 
     // find all apply job 
-    app.get('/job-application', async (req, res) => {
+    app.get('/job-application',verifyToken, async (req, res) => {
         const email = req.query.email
+
         const query = {applicant_email: email}
+        if(req?.user?.email != email ){
+          return res.status(403).send({massage: 'sorry cant access'})
+        }
+       
         const result = await applicationCollection.find(query).toArray()
         // find jobs details by id 
         for(const job of result){
@@ -128,6 +153,8 @@ async function run() {
 
 
     })
+
+
 
     // new jobs added 
     app.post('/jobs' , async (req,res) => {
@@ -166,9 +193,23 @@ async function run() {
     // auth 
     app.post('/jwt',async(req,res)=> {
       const user = req.body
-      const token = jwt.sign(user,process.env.SECRET,{expiresIn:'1h'})
-      res.send(token)
+      const token =  jwt.sign(user,process.env.SECRET,{expiresIn:'1h'})
+     
+      res
+      .cookie('token',token,{
+        httpOnly: true,
+        secure: false,
 
+      })
+      .send({success: true})
+
+    })
+
+    app.post('/logout',(req,res)=> {
+      res.clearCookie('token',{
+        httpOnly: true,
+        secure:false
+      }).send({success:true})
     })
 
 
@@ -180,7 +221,7 @@ async function run() {
 }
 run().catch(console.dir);
 
-app.use(cors());
+
 app.get('/', (req, res) => {
     res.send('Hello World!')
 })
