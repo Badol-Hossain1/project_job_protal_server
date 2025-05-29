@@ -6,11 +6,21 @@ const cookieParser = require('cookie-parser')
 const app = express();
 require('dotenv').config()
 const port = process.env.PORT || 5000;
+
 app.use(cors({
-  origin: ['http://localhost:5173','https://project-job-protal.web.app','http://project-job-protal.firebaseapp.com'], 
+  origin: [
+    'http://localhost:5173',
+    'https://project-job-protal.web.app',
+    'https://project-job-protal.firebaseapp.com',
+    'https://job-protal-server-qp0eixdxe-badols-projects.vercel.app',
+    'https://job-protal-server-steel.vercel.app'
+  ],
   credentials: true,
-   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',               
 }));
+
+
+
+
 app.use(express.json());
 app.use(cookieParser())
 
@@ -53,8 +63,8 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     //  find all the jobs here 
      const db = client.db('job_hounter')
      const jobsCollection = db.collection('jobs') 
@@ -193,15 +203,18 @@ async function run() {
     // auth 
     app.post('/jwt',async(req,res)=> {
       const user = req.body
-      const token =  jwt.sign(user,process.env.SECRET,{expiresIn:'1h'})
+      const token =  jwt.sign(user,process.env.SECRET,{expiresIn:'5h'})
      
       res
       .cookie('token',token,{
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+
 
       })
-      .send({success: true})
+    
+    .send({ success: true });
 
     })
 
@@ -209,6 +222,8 @@ async function run() {
       res.clearCookie('token',{
         httpOnly: true,
         secure:process.env.NODE_ENV === "production",
+          sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+
       }).send({success:true})
     })
 
