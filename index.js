@@ -10,10 +10,14 @@ const port = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://project-job-protal.web.app',
+    'https://project-job-protal.web.app',,
     'https://project-job-protal.firebaseapp.com',
-    'https://job-protal-server-qp0eixdxe-badols-projects.vercel.app',
-    'https://job-protal-server-steel.vercel.app'
+    ''
+  
+ 
+  
+ 
+    
   ],
   credentials: true,
 }));
